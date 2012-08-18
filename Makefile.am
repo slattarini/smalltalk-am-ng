@@ -16,7 +16,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 # Automake requirements
-AUTOMAKE_OPTIONS = gnu 1.11 dist-xz
+AUTOMAKE_OPTIONS = ng gnu 1.12a
+AM_DIST_FORMATS = gzip xz
 ACLOCAL_AMFLAGS = -I build-aux
 
 PACKAGE=smalltalk

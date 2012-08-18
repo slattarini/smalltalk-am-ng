@@ -343,7 +343,6 @@ LTLIBOBJS=`echo "$LIB@&t@OBJS"|sed 's,\.o ,.lo,g;s,\.o$,.lo,'`
 AC_SUBST(LTLIBOBJS)
 
 AC_SUBST(LIBS)
-AC_SUBST(INCLUDES)
 AC_SUBST(ac_aux_dir)
 
 AC_CONFIG_FILES(Makefile snprintfv/Makefile)

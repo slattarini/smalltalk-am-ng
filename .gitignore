@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.star
+.am/
 .svn
 .deps
 .dirstamp

@@ -16,6 +16,7 @@ include_HEADERS = gstpub.h gst.h
 lib_LTLIBRARIES = libgst.la
 EXTRA_PROGRAMS = genprims genbc genvm
 CLEANFILES = genprims$(EXEEXT) genbc$(EXEEXT) genvm$(EXEEXT) \
+  prims.stamp match.stamp vm.stamp \
   genbc-decl.stamp genbc-impl.stamp genpr-parse.stamp genvm-parse.stamp
 
 # definitions for libgst.la
@@ -81,7 +82,6 @@ BUILT_SOURCES = prims.inl match.h builtins.inl vm.inl \
 	genvm-parse.c genvm-scan.c genvm-parse.h
 
 dist_noinst_DATA = valgrind.supp prims.def byte.def vm.def builtins.gperf
-STAMP_FILES = prims.stamp match.stamp vm.stamp
 
 noinst_HEADERS = \
 	gstpriv.h files.h lex.h str.h re.h \
@@ -109,11 +109,10 @@ noinst_HEADERS = \
 # Try to economize in the rebuilds, by avoiding unnecessary
 # changes to the timestamp of match.h
 
-$(srcdir)/match.h: $(srcdir)/match.stamp
+$(srcdir)/match.h: match.stamp
 	@:
 
-$(srcdir)/match.stamp: byte.def byte.c opt.c xlat.c
-	@$(MAKE) genbc$(EXEEXT)
+match.stamp: byte.def byte.c opt.c xlat.c genbc$(EXEEXT)
 	@echo "./genbc$(EXEEXT) $(srcdir)/byte.def $(srcdir)/byte.c $(srcdir)/opt.c $(srcdir)/xlat.c > match.h"; \
 	  ./genbc$(EXEEXT) $(srcdir)/byte.def $(srcdir)/byte.c $(srcdir)/opt.c $(srcdir)/xlat.c > _match.h
 	@if cmp _match.h $(srcdir)/match.h > /dev/null 2>&1; then \
@@ -122,18 +121,17 @@ $(srcdir)/match.stamp: byte.def byte.c opt.c xlat.c
 	else \
 	  mv _match.h $(srcdir)/match.h; \
 	fi
-	@echo timestamp > $(srcdir)/match.stamp
+	@echo timestamp > $@
 
 
 # rules for invoking genprims
 # Try to economize in the rebuilds, by avoiding unnecessary
 # changes to the timestamp of prims.inl
 
-$(srcdir)/prims.inl: $(srcdir)/prims.stamp
+$(srcdir)/prims.inl: prims.stamp
 	@:
 
-$(srcdir)/prims.stamp: prims.def
-	@$(MAKE) genprims$(EXEEXT)
+prims.stamp: prims.def genprims$(EXEEXT)
 	@echo "./genprims$(EXEEXT) < $(srcdir)/prims.def > prims.inl"; \
 	  ./genprims$(EXEEXT) < $(srcdir)/prims.def > _prims.inl
 	@if cmp _prims.inl $(srcdir)/prims.inl > /dev/null 2>&1; then \
@@ -142,17 +140,16 @@ $(srcdir)/prims.stamp: prims.def
 	else \
 	  mv _prims.inl $(srcdir)/prims.inl; \
 	fi
-	@echo timestamp > $(srcdir)/prims.stamp
+	@echo timestamp > $@
 
 # rules for invoking genvm
 # Try to economize in the rebuilds, by avoiding unnecessary
 # changes to the timestamp of vm.inl
 
-$(srcdir)/vm.inl: $(srcdir)/vm.stamp
+$(srcdir)/vm.inl: vm.stamp
 	@:
 
-$(srcdir)/vm.stamp: vm.def
-	@$(MAKE) genvm$(EXEEXT)
+vm.stamp: vm.def genvm$(EXEEXT)
 	@echo "./genvm$(EXEEXT) < $(srcdir)/vm.def | awk '{ /^#/ && gsub(/__oline__/,NR+1); print }' > vm.inl"; \
 	  ./genvm$(EXEEXT) < $(srcdir)/vm.def | awk '{ /^#/ && gsub(/__oline__/,NR+1); print }' > _vm.inl
 	@if cmp _vm.inl $(srcdir)/vm.inl > /dev/null 2>&1; then \
@@ -161,12 +158,12 @@ $(srcdir)/vm.stamp: vm.def
 	else \
 	  mv _vm.inl $(srcdir)/vm.inl; \
 	fi
-	@echo timestamp > $(srcdir)/vm.stamp
+	@echo timestamp > $@
 
 # rules for invoking gperf
 # not fully idiot-proof but only to be run by maintainers
 
-.gperf.inl:
+%.inl: %.gperf
 	@opts="$< `$(SED) -ne /.*gperf/!d -e s///p -e q $< | \
 	    $(SED) 's,$$(srcdir),$(srcdir),g'`"; \
 	  echo $(GPERF) $$opts " > $@"; \
@@ -180,9 +177,3 @@ $(srcdir)/vm.stamp: vm.def
 	  done
 
 builtins.inl: builtins.gperf
-
-dist-hook:
-	for i in $(STAMP_FILES); do \
-	  echo timestamp > $(distdir)/$$i; \
-	done
-

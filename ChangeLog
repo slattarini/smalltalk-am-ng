@@ -1,3 +1,65 @@
+2012-08-17  Stefano Lattarini  <stefano.lattarini@gmail.com>
+
+	build: support (and require) Automake-NG
+
+	* configure.ac (AC_PREREQ): Require Autoconf version >= 2.65,
+	since that is the minimal version supported by Automake-NG.
+	(AC_SUBST): Define AM_VARTYPOS_WHITELIST to "LIBFFI_EXECUTABLE_LDFLAGS
+	RELOC_LDFLAGS".  This is required because Automake-NG is stricter than
+	mainline Automake in its make runtime checks on possible typos in
+	variables like 'foo_SOURCES' and 'bar_LDADD', and that was causing a
+	spurious failure in the GNU Smalltalk build system.
+	* Makefile.am (AUTOMAKE_OPTIONS): Add the 'ng' option, to ensure that
+	mainstream Automake is not used by mistake when bootstrapping.  Also,
+	bump the required Automake version from '1.11.1' to '1.12a', which is
+	the latest (and still development-only) version of Automake-NG at the
+	moment of writing.  Drop the 'dist-xz' option, that is not supported
+	anymore.  The same effect is now obtained ...
+	(AM_DIST_FORMATS): ... defining this to "gzip xz".
+	* packages/glib/Makefile.am (nodist_gst_glib_la_SOURCES): Don't list
+	'libs.def' here.  There's no need to, because it is already generated
+	early (being listed in BUILT_SOURCES), and its role as a prerequisite
+	is already computed automatically by the automatic dependency tracking
+	code.  More importantly, Automake-NG does not blindly treat source
+	files with a custom unknown user extension as if they were header
+	files anymore, so the presence of 'libs.def' here would cause spurious
+	errors.
+	* packages/glib/Makefile.am (INCLUDES): Rename ...
+	(AM_CPPFLAGS): ... like this; 'INCLUDES' was an obsolescent alias for
+	this variable, and the support for it has been removed in Automake-NG
+	(while still present in mainline Automake).
+	* packages/gtk/Makefile.am: Likewise (with 'nodist_gst_gtk_la_SOURCES'
+	in place of 'nodist_gst_glib_la_SOURCES').
+	* snprintfv/configure.ac: Drop AC_SUBST call on 'INCLUDES'; it's not
+	used nor required.
+	* libgst/Makefile.am (.gperf.inl): Rewrite ...
+	(%.inl: %.gperf): ... as a pattern rule.
+	($(srcdir)/match.stamp): No need to specify the '$(srcdir)/' explicitly
+	with GNU make (it was once necessary to avoid a bug with FreeBSD VPATH
+	handling); so rename this target simply ...
+	(match.stamp): ... like this. Also, depend on 'genbc$(EXEEXT)', rather 
+	than calling '$(MAKE)' recursively in the recipe to build it.  Not only
+	is this more efficient, it also avoid possible hanging of "make all"
+	in the 'libgist' subdir; note that this issue was happening only with
+	Automake-NG, not with mainline Automake.
+	($(srcdir)/prims.stamp): Likewise ...
+	(prims.stamp): ... rename and modify the rule (with the dependency
+	being on 'genprims$(EXEEXT)' this time).
+	($(srcdir)/vm.stamp): Likewise ...
+	(vm.stamp): ... rename and modify the rule (with the dependency
+	being on 'genvm$(EXEEXT)' this time).
+	(dist-hook, STAMP_FILES): Remove, no more needed.
+	(CLEANFILES): Add all the '*.stamp' files.
+	* packages/i18n/Makefile.am (.sin.sed): Rewrite ...
+	(%.sed: %.sin): ... as this pattern rule.
+	* doc/Makefile.am (.texi.info): Rewrite ...
+	(%.info: %.texi): ... as this pattern rule.
+	* .gitignore: Ignore all the '.am/' directories everywhere; it's
+	used internally by some Automake-NG generated rules.
+	* build-aux/.gitignore: Ignore the 'am-ng/' directory; it's used by
+	Automake-NG to install makefile fragments used by its generated
+	Makefiles.
+
 2012-02-22  Paolo Bonzini  <bonzini@gnu.org>
 
 	* kernel/CallinProcess.st: Fix creation of cloned process, reported

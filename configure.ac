@@ -6,7 +6,7 @@ dnl with this software.
 dnl Process this file with autoconf to produce a configure script.
 
 dnl 2.63 needed by testsuite, actually
-AC_PREREQ(2.63)
+AC_PREREQ(2.65)
 AC_INIT([GNU Smalltalk], 3.2.90, help-smalltalk@gnu.org, smalltalk,
         [http://smalltalk.gnu.org/])
 MAINTAINER="bonzini@gnu.org"
@@ -23,6 +23,10 @@ AC_CONFIG_HEADERS([config.h])
 GST_PROG_GAWK
 AM_INIT_AUTOMAKE
 AC_CANONICAL_HOST
+
+# Avoid spurious failures with Automake-NG.
+AC_SUBST([AM_VARTYPOS_WHITELIST],
+         ['RELOC_LDFLAGS LIBFFI_EXECUTABLE_LDFLAGS'])
 
 if test -d $srcdir/.git; then
   GIT_REVISION=-`git rev-parse --short HEAD 2>/dev/null || echo git`
